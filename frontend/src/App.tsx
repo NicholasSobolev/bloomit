@@ -18,17 +18,17 @@ import { Toaster } from "@/components/ui/toaster";
 import { useGitHubAuth } from "./hooks/useGitHubAuth";
 import { useCommitData } from "./hooks/useCommitData";
 import Tree from "./components/Tree";
+import Loading from "./components/Loading";
 
 function App() {
   const { token, username, avatarUrl, email, isInitializing, login, logout } =
     useGitHubAuth();
-  const { streak, maxstreak, health, dayswithcommits } = useCommitData(
-    token,
-    username,
-    false,
-  );
+  const { streak, maxStreak, totalCommits, daysWithCommits, mergedPRs } =
+    useCommitData(token, username, false);
   const [vantaEffect, setVantaEffect] = useState<any>(null);
+  const [treeLoaded, setTreeLoaded] = useState(false);
   const myRef = useRef(null);
+
   useEffect(() => {
     if (token) return;
     let timer: ReturnType<typeof setTimeout>;
@@ -58,12 +58,7 @@ function App() {
     <>
       {isInitializing ? (
         <Flex align="center" justify="center" height="100vh">
-          <Flex direction="column" align="center">
-            <Spinner size="xl" />
-            <Text textStyle="md" mt={3}>
-              loading :D
-            </Text>
-          </Flex>
+          <Loading />
         </Flex>
       ) : !token ? (
         <Box ref={myRef} bg="#002222" height="100vh" width="100vw">
@@ -91,12 +86,7 @@ function App() {
             </Flex>
           ) : (
             <Flex align="center" justify="center" height="full">
-              <Flex direction="column" align="center">
-                <Spinner size="xl" />
-                <Text textStyle="md" mt={3}>
-                  loading :D
-                </Text>
-              </Flex>
+              <Loading />
             </Flex>
           )}
         </Box>
@@ -108,9 +98,9 @@ function App() {
             left={6}
             top={6}
             bottom={6}
-            width="300px"
+            width="350px"
             p={4}
-            bg="rgba(3, 10, 10, 1)"
+            bg="rgba(3, 10, 10, 1)/95"
             borderRadius="lg"
             boxShadow="lg"
             justify="space-between"
@@ -141,10 +131,11 @@ function App() {
                 <Text fontSize="xl" fontWeight="bold">
                   In the last 30 days...
                 </Text>
-                <Text>Health: {health}</Text>
                 <Text>Streak: {streak}</Text>
-                <Text>Max Streak: {maxstreak}</Text>
-                <Text>Days with Commits: {dayswithcommits}</Text>
+                <Text>Max Streak: {maxStreak}</Text>
+                <Text>Days with Commits: {daysWithCommits}</Text>
+                <Text>Merged Pull Requests: {mergedPRs}</Text>
+                <Text>Number of Commits: {totalCommits}</Text>
               </Box>
             </Stack>
             <Button onClick={() => logout()}>
@@ -153,9 +144,20 @@ function App() {
               </Icon>
             </Button>
           </Flex>
-          <Box position="absolute" left={0} right={0} top={0} bottom={0}>
-            <Tree />
-          </Box>
+          <Tree
+            totalCommits={totalCommits}
+            mergedPRs={mergedPRs}
+            streak={streak}
+            maxStreak={maxStreak}
+            daysWithCommits={daysWithCommits}
+            onLoad={() => setTreeLoaded(true)}
+          />
+
+          {!treeLoaded && (
+            <Flex align="center" justify="center" height="full">
+              <Loading />
+            </Flex>
+          )}
         </Box>
       )}
       <Toaster />

@@ -8,9 +8,10 @@ export const useCommitData = (
   isNewLogin: boolean,
 ) => {
   const [streak, setStreak] = useState(0);
-  const [maxstreak, setMaxstreak] = useState(0);
-  const [health, setHealth] = useState(0);
-  const [dayswithcommits, setDayswithcommits] = useState(0);
+  const [maxStreak, setMaxStreak] = useState(0);
+  const [daysWithCommits, setDaysWithCommits] = useState(0);
+  const [mergedPRs, setMergedPRs] = useState(0);
+  const [totalCommits, setTotalCommits] = useState(0);
 
   useEffect(() => {
     if (!token || !username) return;
@@ -20,10 +21,11 @@ export const useCommitData = (
         const res = await axios.get(
           `http://localhost:5000/commit_activity?token=${token}&username=${username}`,
         );
-        setHealth(res.data.health);
         setStreak(res.data.streak);
-        setMaxstreak(res.data.max_streak);
-        setDayswithcommits(res.data.days_with_commits.length);
+        setMaxStreak(res.data.max_streak);
+        setDaysWithCommits(res.data.days_with_commits.length);
+        setMergedPRs(res.data.merged_prs);
+        setTotalCommits(res.data.total_commits);
       } catch (error) {
         console.error("Error fetching commits:", error);
         toaster.create({
@@ -44,5 +46,5 @@ export const useCommitData = (
     fetchData();
   }, [token, username, isNewLogin]);
 
-  return { streak, maxstreak, health, dayswithcommits };
+  return { streak, maxStreak, daysWithCommits, mergedPRs, totalCommits };
 };

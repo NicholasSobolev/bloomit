@@ -2,68 +2,79 @@ import { useEffect, useRef } from "react";
 import p5 from "p5";
 import { Box } from "@chakra-ui/react";
 
-export default function Tree() {
+interface Activity {
+  totalCommits: number;
+  mergedPRs: number;
+  streak: number;
+  maxStreak: number;
+  daysWithCommits: number;
+  onLoad?: () => void;
+}
+
+export default function Tree({
+  totalCommits,
+  mergedPRs,
+  streak,
+  maxStreak,
+  daysWithCommits,
+  onLoad,
+}: Activity) {
   const sketchRef = useRef<HTMLDivElement | null>(null);
+  const loadedRef = useRef(false); // ensure onLoad is called only once
 
   useEffect(() => {
     let p5Instance: p5 | null = null;
 
     const sketch = (p: p5) => {
-      let currentLen = 0;
-      const maxLen = 200;
-      const growthSpeed = 2;
-      let leavesReady = false;
-      let leafGraphics: p5.Graphics | null = null;
+      const activityScore = totalCommits + mergedPRs;
+      const baseLen = p.map(activityScore, 0, 200, 80, 200, true);
+      const branchColor = streak > 10 ? [120, 80, 40] : [80, 50, 30];
+      const leafBaseColor = p.map(daysWithCommits, 0, 30, 80, 200, true);
 
-      const sidebarLeft = 24;
-      const sidebarWidth = 250;
-      const centerShift = (sidebarLeft + sidebarWidth) / 2;
-
-      const drawTree = (
-        ctx: any,
-        len: number,
-        drawBranches: boolean,
-        drawLeaves: boolean,
-      ) => {
-        ctx.push();
+      const branch = (len: number) => {
         if (len > 10) {
-          if (drawBranches) {
-            ctx.stroke(255);
-            ctx.strokeWeight(ctx.map(len, 10, maxLen, 1, 8));
-            ctx.line(0, 0, 0, -len);
+          p.strokeWeight(p.map(len, 10, 100, 1, 15));
+          p.stroke(branchColor[0], branchColor[1], branchColor[2]);
+          p.line(0, 0, 0, -len);
+          p.translate(0, -len);
+
+          // left branch
+          p.push();
+          p.rotate(p.random(-30, -20));
+          branch(len * p.random(0.7, 0.9));
+          p.pop();
+
+          // right branch
+          p.push();
+          p.rotate(p.random(20, 30));
+          branch(len * p.random(0.7, 0.9));
+          p.pop();
+        } else {
+          // leaf
+          const r = 50 + p.random(-20, 20);
+          const g = leafBaseColor + p.random(-30, 30);
+          const b = 50 + p.random(-20, 20);
+          p.fill(r, g, b);
+          p.noStroke();
+
+          p.beginShape();
+          for (let i = 45; i < 135; i++) {
+            const rad = 15;
+            p.vertex(rad * p.cos(i), rad * p.sin(i));
           }
-          ctx.translate(0, -len);
-
-          ctx.push();
-          ctx.rotate(30);
-          drawTree(ctx, len * 0.7, drawBranches, drawLeaves);
-          ctx.pop();
-
-          ctx.push();
-          ctx.rotate(-30);
-          drawTree(ctx, len * 0.7, drawBranches, drawLeaves);
-          ctx.pop();
-        } else if (drawLeaves) {
-          const g = 170 + Math.random() * 60;
-          const b = 200 + Math.random() * 40;
-          const size = 6 + Math.random() * 8;
-          ctx.noStroke();
-          ctx.fill(255, g, b);
-          ctx.ellipse(0, 0, size, size);
+          for (let i = 135; i > 40; i--) {
+            const rad = 15;
+            p.vertex(rad * p.cos(i), rad * p.sin(-i));
+          }
+          p.endShape(p.CLOSE);
         }
-        ctx.pop();
       };
 
-      const generateLeafGraphics = () => {
-        if (leafGraphics) leafGraphics.remove?.();
-        leafGraphics = p.createGraphics(p.width, p.height);
-        leafGraphics.angleMode(p.DEGREES);
-        leafGraphics.clear();
-        leafGraphics.push();
-
-        leafGraphics.translate(p.width / 2 + centerShift, p.height);
-        drawTree(leafGraphics, maxLen, false, true);
-        leafGraphics.pop();
+      const drawTree = () => {
+        p.clear();
+        p.background("#002222");
+        p.translate(p.width / 2, p.height);
+        branch(baseLen);
       };
 
       p.setup = () => {
@@ -72,43 +83,16 @@ export default function Tree() {
           sketchRef.current.offsetWidth,
           sketchRef.current.offsetHeight,
         );
-        Object.assign((p as any).canvas.style, {
-          pointerEvents: "none",
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          zIndex: "0",
-        });
         p.angleMode(p.DEGREES);
-        p.noFill();
-      };
 
-      p.draw = () => {
-        p.clear();
-
-        if (currentLen < maxLen) {
-          currentLen += growthSpeed;
-        } else if (!leavesReady) {
-          leavesReady = true;
-          setTimeout(() => {
-            generateLeafGraphics();
-            p.loop();
-          }, 700);
-          p.noLoop();
+        // ✅ Call onLoad immediately after canvas is ready
+        if (!loadedRef.current && onLoad) {
+          loadedRef.current = true;
+          onLoad();
         }
 
-        // draw branches
-        p.push();
-        p.translate(p.width / 2 + centerShift, p.height);
-        drawTree(p, currentLen, true, false);
-        p.pop();
-
-        // draw blossoms
-        if (leavesReady && leafGraphics) {
-          p.image(leafGraphics, 0, 0);
-          p.noLoop();
-        }
+        drawTree();
+        p.noLoop();
       };
 
       p.windowResized = () => {
@@ -117,10 +101,7 @@ export default function Tree() {
           sketchRef.current.offsetWidth,
           sketchRef.current.offsetHeight,
         );
-        if (leavesReady) {
-          generateLeafGraphics();
-          p.loop();
-        }
+        drawTree();
       };
     };
 
@@ -129,12 +110,21 @@ export default function Tree() {
     }
 
     return () => {
-      if (p5Instance) {
-        p5Instance.remove();
-        p5Instance = null;
-      }
+      p5Instance?.remove();
+      p5Instance = null;
+      loadedRef.current = false;
     };
-  }, []);
+  }, [totalCommits, mergedPRs, streak, maxStreak, daysWithCommits, onLoad]);
 
-  return <Box ref={sketchRef} w="100%" h="100%" />;
+  return (
+    <Box
+      ref={sketchRef}
+      w="100%"
+      h="100%"
+      position="absolute"
+      top={0}
+      left={0}
+      overflow="hidden"
+    />
+  );
 }

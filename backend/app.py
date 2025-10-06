@@ -53,42 +53,62 @@ def get_commit_data():
         return jsonify({"error": "Failed to fetch repos", "details": str(e)}), 500
 
     commit_days = set()
-    for repo in repos:
-        try:
-            commits_resp = requests.get(
-                f"{GITHUB_API_URL}/repos/{username}/{repo['name']}/commits",
+    total_commits = 0
+    search_query_commit = f"author:{username} author-date:>={since:10}"
+    try:
+        page = 1
+        while True:
+            search_resp_commit = requests.get(
+                f"{GITHUB_API_URL}/search/commits",
                 headers=headers,
-                params={"since": since, "author": username},
+                params={"q": search_query_commit, "per_page": 100, "page": page},
             )
-            commits_resp.raise_for_status()
-            for commit in commits_resp.json():
-                commit_date = commit["commit"]["author"]["date"][:10]
+            search_resp_commit.raise_for_status()
+            data = search_resp_commit.json()
+            total_commits = data.get("total_count", 0)
+            for item in data.get("items", []):
+                commit_date = item["commit"]["author"]["date"][:10]
                 commit_days.add(commit_date)
-        except Exception as e:
-            continue
+            if len(data["items"]) < 100:
+                break
+            page += 1
+            if page > 10:  # max 1000 results
+                break
+    except Exception as e:
+        pass
+
+    merged_prs = 0
+    search_query = f"type:pr author:{username} merged:>={since:10}"
+    try:
+        search_resp = requests.get(
+            f"{GITHUB_API_URL}/search/issues",
+            headers=headers,
+            params={"q": search_query},
+        )
+        search_resp.raise_for_status()
+        merged_prs = search_resp.json().get("total_count", 0)
+    except Exception as e:
+        pass
 
     today = datetime.now().date()
     streak = 0
-    health = 0
     max_streak = 0
 
     for day in range(30, -1, -1):
         check_date = (today - timedelta(days=day)).isoformat()
         if check_date in commit_days:
             streak += 1
-            health += 3
             max_streak = max(max_streak, streak)
         else:
             streak = 0
-            health -= 1
-        health = max(0, min(100, health))
 
     return jsonify(
         {
             "streak": streak,
-            "health": health,
             "max_streak": max_streak,
             "days_with_commits": list(commit_days),
+            "merged_prs": merged_prs,
+            "total_commits": total_commits,
         }
     )
 
