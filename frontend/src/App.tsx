@@ -1,5 +1,4 @@
 import "./App.css";
-import axios from "axios";
 import { useState, useEffect, useRef } from "react";
 import TOPOLOGY from "vanta/dist/vanta.topology.min";
 import p5 from "p5";
@@ -15,160 +14,21 @@ import {
   Float,
   Circle,
 } from "@chakra-ui/react";
-import { toaster, Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/components/ui/toaster";
+import { useGitHubAuth } from "./hooks/useGitHubAuth";
+import { useCommitData } from "./hooks/useCommitData";
+import Tree from "./components/Tree";
 
 function App() {
-  const [token, setToken] = useState<string | null>(null);
-  const [username, setUsername] = useState("");
-  const [streak, setStreak] = useState(0);
-  const [maxstreak, setMaxstreak] = useState(0);
-  const [health, setHealth] = useState(0);
-  const [dayswithcommits, setDayswithcommits] = useState(0);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const { token, username, avatarUrl, email, isInitializing, login, logout } =
+    useGitHubAuth();
+  const { streak, maxstreak, health, dayswithcommits } = useCommitData(
+    token,
+    username,
+    false,
+  );
   const [vantaEffect, setVantaEffect] = useState<any>(null);
-  const [avatarUrl, setAvatarUrl] = useState("");
-  const [email, setEmail] = useState("");
   const myRef = useRef(null);
-  const processedCodeRef = useRef(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("token");
-    if (stored && stored.startsWith("gho_")) {
-      setToken(stored);
-    } else {
-      localStorage.removeItem("token");
-    }
-    setIsInitializing(false);
-  }, []);
-  const login = () => {
-    const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
-    window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo`;
-  };
-
-  // exchange code for token and fetch user data
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get("code");
-    if (!code || processedCodeRef.current) return;
-
-    processedCodeRef.current = true;
-    const getToken = async () => {
-      setIsInitializing(true);
-      try {
-        const res = await axios.get(`http://localhost:5000/auth?code=${code}`);
-        console.log("Auth response:", res.data);
-        const newToken = res.data.access_token;
-        if (!newToken) {
-          throw new Error("No access token received!");
-        }
-        setToken(newToken);
-        localStorage.setItem("token", newToken);
-        window.history.replaceState({}, "", "/");
-        const isNewLogin = true;
-
-        try {
-          const userRes = await axios.get("https://api.github.com/user", {
-            headers: { Authorization: `token ${newToken}` },
-          });
-          console.log("GitHub user:", userRes.data);
-          setUsername(userRes.data.login);
-          setAvatarUrl(userRes.data.avatar_url);
-          setEmail(userRes.data.email || userRes.data.company || "");
-          await fetchData(newToken, userRes.data.login, isNewLogin);
-        } catch (err: any) {
-          if (err.response?.status === 401) {
-            console.warn("Token expired, logging out");
-            setToken(null);
-            localStorage.removeItem("token");
-          } else {
-            console.error("Error fetching user:", err);
-            toaster.create({
-              title: "Error",
-              description: "Failed to fetch user data.",
-              type: "error",
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching token:", error);
-        toaster.create({
-          title: "Login error",
-          description: "Failed to authenticate with GitHub. Please try again.",
-          type: "error",
-        });
-      } finally {
-        setIsInitializing(false);
-      }
-    };
-    getToken();
-  }, []);
-
-  // load user data if token exists but no code (e.g., refresh)
-  useEffect(() => {
-    if (token && !isInitializing && !username) {
-      const loadUserData = async () => {
-        setIsInitializing(true);
-        try {
-          const userRes = await axios.get("https://api.github.com/user", {
-            headers: { Authorization: `token ${token}` },
-          });
-          setUsername(userRes.data.login);
-          setAvatarUrl(userRes.data.avatar_url);
-          setEmail(userRes.data.email || userRes.data.company || "");
-          await fetchData(token, userRes.data.login, false);
-        } catch (err: any) {
-          if (err.response?.status === 401) {
-            console.warn("Token expired, logging out");
-            setToken(null);
-            localStorage.removeItem("token");
-          } else {
-            console.error("Error fetching user:", err);
-            toaster.create({
-              title: "Error",
-              description: "Failed to load user data.",
-              type: "error",
-            });
-          }
-        } finally {
-          setIsInitializing(false);
-        }
-      };
-      loadUserData();
-    }
-  }, [token, isInitializing, username]);
-
-  // fetch commit stats
-  const fetchData = async (
-    token: string,
-    user: string,
-    isNewLogin: boolean,
-  ) => {
-    try {
-      const res = await axios.get(
-        `http://localhost:5000/commit_activity?token=${token}&username=${user}`,
-      );
-      setHealth(res.data.health);
-      setStreak(res.data.streak);
-      setMaxstreak(res.data.max_streak);
-      setDayswithcommits(res.data.days_with_commits.length);
-    } catch (error) {
-      console.error("Error fetching commits:", error);
-      toaster.create({
-        title: "Error",
-        description: "Failed to fetch commit data.",
-        type: "error",
-      });
-    } finally {
-      if (isNewLogin) {
-        toaster.create({
-          title: "Login successful",
-          description: "You successfully logged in with your GitHub Account.",
-          type: "success",
-        });
-      }
-    }
-  };
-
   useEffect(() => {
     if (token) return;
     let timer: ReturnType<typeof setTimeout>;
@@ -194,7 +54,6 @@ function App() {
       if (vantaEffect) vantaEffect.destroy();
     };
   }, [vantaEffect, p5, token]);
-
   return (
     <>
       {isInitializing ? (
@@ -242,64 +101,60 @@ function App() {
           )}
         </Box>
       ) : (
-        <Box
-          bg="#022222"
-          height="100vh"
-          width="100vw"
-          p={4}
-          position="relative"
-        >
-          <Box marginTop="100px">
-            <Text fontSize="xl" fontWeight="bold">
-              Quick Look
-            </Text>
-            <Text>Health: {health}</Text>
-            <Text>Streak: {streak}</Text>
-            <Text>Max Streak: {maxstreak}</Text>
-            <Text>Days with Commits: {dayswithcommits}</Text>
-          </Box>
-          <Button
+        <Box position="relative" height="100vh" width="100vw" bg="#022222">
+          <Flex
+            direction="column"
             position="absolute"
-            bottom={4}
-            left={4}
-            onClick={() => {
-              setToken(null);
-              localStorage.removeItem("token");
-              setUsername("");
-              setHealth(0);
-              setStreak(0);
-              setMaxstreak(0);
-              setDayswithcommits(0);
-              toaster.create({
-                title: "Logout successful",
-                description: "You successfully logged out.",
-                type: "success",
-              });
-            }}
+            left={6}
+            top={6}
+            bottom={6}
+            width="300px"
+            p={4}
+            bg="rgba(3, 10, 10, 1)"
+            borderRadius="lg"
+            boxShadow="lg"
+            justify="space-between"
+            zIndex={1}
           >
-            <Icon boxSize={6}>
-              <img src="/MaterialSymbolsLogoutRounded.svg" alt="Logout" />
-            </Icon>
-          </Button>
-          <Box position="absolute" top={4} left={4}>
-            <Avatar.Root size="md" marginBottom="5px">
-              <Avatar.Fallback name={username} />
-              {avatarUrl && <Avatar.Image src={avatarUrl} />}
-              <Float placement="bottom-end" offsetX="1" offsetY="1">
-                <Circle
-                  bg="green.500"
-                  size="8px"
-                  outline="0.2em solid"
-                  outlineColor="bg"
-                />
-              </Float>
-            </Avatar.Root>
-            <Stack gap="0">
-              <Text fontWeight="medium">{username}</Text>
-              <Text color="fg.muted" textStyle="sm">
-                {email}
-              </Text>
+            <Stack>
+              <Box>
+                <Avatar.Root size="md" marginBottom="5px">
+                  <Avatar.Fallback name={username} />
+                  {avatarUrl && <Avatar.Image src={avatarUrl} />}
+                  <Float placement="bottom-end" offsetX="1" offsetY="1">
+                    <Circle
+                      bg="green.500"
+                      size="8px"
+                      outline="0.2em solid"
+                      outlineColor="bg"
+                    />
+                  </Float>
+                </Avatar.Root>
+                <Stack gap="0">
+                  <Text fontWeight="medium">{username}</Text>
+                  <Text color="fg.muted" textStyle="sm">
+                    {email}
+                  </Text>
+                </Stack>
+              </Box>
+              <Box>
+                <Text fontSize="xl" fontWeight="bold">
+                  In the last 30 days...
+                </Text>
+                <Text>Health: {health}</Text>
+                <Text>Streak: {streak}</Text>
+                <Text>Max Streak: {maxstreak}</Text>
+                <Text>Days with Commits: {dayswithcommits}</Text>
+              </Box>
             </Stack>
+            <Button onClick={() => logout()}>
+              <Icon boxSize={6}>
+                <img src="/MaterialSymbolsLogoutRounded.svg" alt="Logout" />
+              </Icon>
+            </Button>
+          </Flex>
+          <Box position="absolute" left={0} right={0} top={0} bottom={0}>
+            <Tree />
           </Box>
         </Box>
       )}
