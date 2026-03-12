@@ -2,6 +2,13 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { toaster } from "@/components/ui/toaster";
 
+export interface CommitDay {
+  date: string;
+  count: number;
+  message: string;
+  url: string;
+}
+
 export const useCommitData = (
   token: string | null,
   username: string,
@@ -12,11 +19,14 @@ export const useCommitData = (
   const [daysWithCommits, setDaysWithCommits] = useState(0);
   const [mergedPRs, setMergedPRs] = useState(0);
   const [totalCommits, setTotalCommits] = useState(0);
+  const [commitDays, setCommitDays] = useState<CommitDay[]>([]);
+
+	const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (!token || !username) return;
-
     const fetchData = async () => {
+			setIsLoading(true);
       try {
         const res = await axios.get(
           `http://localhost:5000/commit_activity?token=${token}&username=${username}`,
@@ -26,6 +36,7 @@ export const useCommitData = (
         setDaysWithCommits(res.data.days_with_commits.length);
         setMergedPRs(res.data.merged_prs);
         setTotalCommits(res.data.total_commits);
+        setCommitDays(res.data.commit_days ?? []);  // ← new
       } catch (error) {
         console.error("Error fetching commits:", error);
         toaster.create({
@@ -34,6 +45,7 @@ export const useCommitData = (
           type: "error",
         });
       } finally {
+				setIsLoading(false);
         if (isNewLogin) {
           toaster.create({
             title: "Login successful",
@@ -46,5 +58,5 @@ export const useCommitData = (
     fetchData();
   }, [token, username, isNewLogin]);
 
-  return { streak, maxStreak, daysWithCommits, mergedPRs, totalCommits };
+  return { streak, maxStreak, daysWithCommits, mergedPRs, totalCommits, commitDays, isLoading };
 };
