@@ -7,6 +7,12 @@ export interface CommitDay {
   count: number;
   message: string;
   url: string;
+  commits: {
+    message: string;
+    url: string;
+    repository: string;
+    timestamp?: string;
+  }[];
 }
 
 export const useCommitData = (
@@ -19,6 +25,8 @@ export const useCommitData = (
   const [daysWithCommits, setDaysWithCommits] = useState(0);
   const [mergedPRs, setMergedPRs] = useState(0);
   const [totalCommits, setTotalCommits] = useState(0);
+  const [previousPeriodCommits, setPreviousPeriodCommits] = useState(0);
+  const [growthVelocityPct, setGrowthVelocityPct] = useState(0);
   const [commitDays, setCommitDays] = useState<CommitDay[]>([]);
 
 	const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +44,8 @@ export const useCommitData = (
         setDaysWithCommits(res.data.days_with_commits.length);
         setMergedPRs(res.data.merged_prs);
         setTotalCommits(res.data.total_commits);
+        setPreviousPeriodCommits(res.data.previous_period_commits ?? 0);
+        setGrowthVelocityPct(res.data.growth_velocity_pct ?? 0);
         setCommitDays(res.data.commit_days ?? []);  // ← new
       } catch (error) {
         console.error("Error fetching commits:", error);
@@ -58,5 +68,15 @@ export const useCommitData = (
     fetchData();
   }, [token, username, isNewLogin]);
 
-  return { streak, maxStreak, daysWithCommits, mergedPRs, totalCommits, commitDays, isLoading };
+  return {
+    streak,
+    maxStreak,
+    daysWithCommits,
+    mergedPRs,
+    totalCommits,
+    previousPeriodCommits,
+    growthVelocityPct,
+    commitDays,
+    isLoading,
+  };
 };

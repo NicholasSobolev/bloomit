@@ -23,6 +23,8 @@ interface LoggedInViewProps {
   daysWithCommits: number;
   mergedPRs: number;
   totalCommits: number;
+  previousPeriodCommits: number;
+  growthVelocityPct: number;
   commitDays: CommitDay[];
   treeLoaded: boolean;
   onTreeLoad: () => void;
@@ -38,6 +40,8 @@ export default function LoggedInView({
   daysWithCommits,
   mergedPRs,
   totalCommits,
+  previousPeriodCommits,
+  growthVelocityPct,
   commitDays,
   treeLoaded,
   onTreeLoad,
@@ -80,16 +84,7 @@ export default function LoggedInView({
               </Text>
             </Stack>
           </Box>
-          <Box>
-            <Text fontSize="xl" fontWeight="bold">
-              In the last 30 days...
-            </Text>
-            <Text>Streak: {streak}</Text>
-            <Text>Max Streak: {maxStreak}</Text>
-            <Text>Days with Commits: {daysWithCommits}</Text>
-            <Text>Merged Pull Requests: {mergedPRs}</Text>
-            <Text>Number of Commits: {totalCommits}</Text>
-          </Box>
+          <Box />
         </Stack>
         <Button onClick={onLogout}>
           <Icon boxSize={6}>
@@ -104,6 +99,8 @@ export default function LoggedInView({
         streak={streak}
         maxStreak={maxStreak}
         daysWithCommits={daysWithCommits}
+        previousPeriodCommits={previousPeriodCommits}
+        growthVelocityPct={growthVelocityPct}
         commitDays={commitDays}
         onLoad={onTreeLoad}
       />

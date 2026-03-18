@@ -11,7 +11,7 @@ import LoggedOutView from "./components/LoggedOutView";
 function App() {
   const { token, username, avatarUrl, email, login, logout } =
     useGitHubAuth();
-  const { streak, maxStreak, totalCommits, daysWithCommits, mergedPRs, commitDays, isLoading } =
+  const { streak, maxStreak, totalCommits, previousPeriodCommits, growthVelocityPct, daysWithCommits, mergedPRs, commitDays, isLoading } =
     useCommitData(token, username, false);
   const [vantaEffect, setVantaEffect] = useState<any>(null);
   const [treeLoaded, setTreeLoaded] = useState(false);
@@ -74,6 +74,8 @@ function App() {
           daysWithCommits={daysWithCommits}
           mergedPRs={mergedPRs}
           totalCommits={totalCommits}
+					previousPeriodCommits={previousPeriodCommits}
+					growthVelocityPct={growthVelocityPct}
 					commitDays={commitDays}
           treeLoaded={treeLoaded}
           onTreeLoad={() => setTreeLoaded(true)}
