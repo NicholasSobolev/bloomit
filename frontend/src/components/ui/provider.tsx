@@ -1,7 +1,8 @@
 "use client";
 
 import { ChakraProvider, createSystem, defaultConfig } from "@chakra-ui/react";
-import { ColorModeProvider, type ColorModeProviderProps } from "./color-mode";
+import { ThemeProvider } from "next-themes";
+import type { ReactNode } from "react";
 
 import "@fontsource-variable/rubik/index.css";
 
@@ -17,10 +18,16 @@ const customSystem = createSystem(defaultConfig, {
   },
 });
 
-export function Provider(props: ColorModeProviderProps) {
+interface ProviderProps {
+  children: ReactNode;
+}
+
+export function Provider({ children }: ProviderProps) {
   return (
     <ChakraProvider value={customSystem}>
-      <ColorModeProvider {...props} />
+      <ThemeProvider attribute="class" forcedTheme="dark" disableTransitionOnChange>
+        {children}
+      </ThemeProvider>
     </ChakraProvider>
   );
 }

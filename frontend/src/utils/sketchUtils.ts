@@ -1,4 +1,4 @@
-import type { BranchNode } from "./types";
+import type { BranchNode } from "../types/Tree.types";
 
 export function mulberry32(seed: number) {
   return function () {

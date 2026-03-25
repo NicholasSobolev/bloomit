@@ -4,9 +4,9 @@ import { Box } from "@chakra-ui/react";
 import type { CommitDay } from "../hooks/useCommitData";
 import CommitDetailsModal from "./tree/CommitDetailsModal";
 import SortModeToggle from "./tree/SortModeToggle";
-import { buildDisplayCommitGroups, getSelectedCommitDetails, sortCommitGroupsForSketch } from "./tree/commitUtils";
-import { drawLeaf, generateSkeleton, hashString, mulberry32 } from "./tree/sketchUtils";
-import type { Activity, Bounds, BranchNode, BranchSegment, LeafHit, LeafNode } from "./tree/types";
+import { buildDisplayCommitGroups, getSelectedCommitDetails, sortCommitGroupsForSketch } from "../utils/commitUtils";
+import { drawLeaf, generateSkeleton, hashString, mulberry32 } from "../utils/sketchUtils";
+import type { Activity, Bounds, BranchNode, BranchSegment, LeafHit, LeafNode } from "../types/Tree.types.ts";
 
 export default function Tree({
   userId,
@@ -599,7 +599,7 @@ export default function Tree({
         const growthSign = growthVelocityPct >= 0 ? "+" : "";
         const velocityValue = `${growthSign}${growthVelocityPct.toFixed(1)}%`;
         const panelRightX = p.width - 12;
-        const labelX = panelRightX - 190;
+        const labelX = panelRightX - 218;
         const panelY = 12;
         const lineH = 16;
         const rows: Array<{ label: string; value: string; color?: string }> = [
@@ -616,7 +616,7 @@ export default function Tree({
         ];
 
         p.noStroke();
-        p.textSize(12);
+        p.textSize(13);
         rows.forEach((row, i) => {
           const y = panelY + i * lineH;
           p.fill(UI_TEXT_MUTED);

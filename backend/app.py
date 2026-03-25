@@ -101,7 +101,7 @@ def get_commit_data():
         print("Commit fetch error:", e)
 
     if previous_period_commits == 0:
-        growth_velocity_pct = 100.0 if total_commits > 0 else 0.0
+        growth_velocity_pct = 100.0 if total_commits > 0 else 0.0 #treat as 100% growth
     else:
         growth_velocity_pct = ((total_commits - previous_period_commits) / previous_period_commits) * 100
 
@@ -131,7 +131,8 @@ def get_commit_data():
         search_resp.raise_for_status()
         merged_prs = search_resp.json().get("total_count", 0)
     except Exception as e:
-        pass
+        print("PR fetch error:", e)
+        merged_prs = None
 
     today = datetime.now().date()
     streak = 0

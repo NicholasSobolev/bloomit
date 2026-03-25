@@ -8,9 +8,12 @@ import {
   Stack,
   Float,
   Circle,
+  SimpleGrid,
 } from "@chakra-ui/react";
 import Tree from "./Tree";
 import Loading from "./Loading";
+import StatsCard from "./tree/StatsCard";
+import SearchCommits from "./tree/SearchCommits";
 
 import type { CommitDay } from "../hooks/useCommitData";
 
@@ -47,25 +50,49 @@ export default function LoggedInView({
   onTreeLoad,
   onLogout,
 }: LoggedInViewProps) {
+  const useMaxStatsForTesting = false;
+
+  const displayStats = useMaxStatsForTesting
+    ? {
+        streak: 365,
+        maxStreak: 365,
+        daysWithCommits: 365,
+        mergedPRs: 999,
+        totalCommits: 9999,
+        previousPeriodCommits: 9999,
+        growthVelocityPct: 999.9,
+      }
+    : {
+        streak,
+        maxStreak,
+        daysWithCommits,
+        mergedPRs,
+        totalCommits,
+        previousPeriodCommits,
+        growthVelocityPct,
+      };
+
   return (
     <Box position="relative" height="100vh" width="100vw" bg="#022222">
       <Flex
         direction="column"
         position="absolute"
+        display={{ base: "none", xl: "flex" }}
         left={6}
         top={40}
         bottom={40}
-        width="350px"
+        width="375px"
         p={4}
-        bg="rgba(3, 10, 10, 1)/85"
+        bg="rgba(3, 10, 10, 0.85)"
         borderRadius="lg"
         boxShadow="lg"
         justify="space-between"
+        overflow="visible"
         zIndex={1}
       >
-        <Stack>
-          <Box>
-            <Avatar.Root size="md" marginBottom="5px">
+        <Stack flex={1} minH={0} overflow="visible">
+          <Flex align="center" gap={3}>
+            <Avatar.Root size="md">
               <Avatar.Fallback name={username} />
               {avatarUrl && <Avatar.Image src={avatarUrl} />}
               <Float placement="bottom-end" offsetX="1" offsetY="1">
@@ -77,30 +104,55 @@ export default function LoggedInView({
                 />
               </Float>
             </Avatar.Root>
-            <Stack gap="0">
-              <Text fontWeight="medium">{username}</Text>
-              <Text color="fg.muted" textStyle="sm">
+            <Stack gap="0" align="flex-start" minW={0}>
+              <Text fontWeight="medium" textAlign="left" lineClamp={1}>
+                {username}
+              </Text>
+              <Text
+                color="fg.muted"
+                textStyle="sm"
+                textAlign="left"
+                lineClamp={1}
+              >
                 {email}
               </Text>
             </Stack>
+          </Flex>
+          <SimpleGrid columns={3} gap={3} w="full">
+            <StatsCard value={displayStats.totalCommits} label="Commits" />
+            <StatsCard value={displayStats.daysWithCommits} label="Days" />
+            <StatsCard value={displayStats.streak} label="Streak" />
+          </SimpleGrid>
+
+          <Box w="full">
+            <SearchCommits commitDays={commitDays} />
           </Box>
-          <Box />
         </Stack>
-        <Button onClick={onLogout}>
-          <Icon boxSize={6}>
-            <img src="/MaterialSymbolsLogoutRounded.svg" alt="Logout" />
-          </Icon>
-        </Button>
+        <Flex direction="row" w="full" gap={3}>
+          <Button flex={1}>
+            <Flex align="center" gap={2}>
+              <Icon boxSize={5}>
+                <img src="/MaterialSymbolsSettings.svg" alt="Settings" />
+              </Icon>
+              <Text fontSize="sm">Settings</Text>
+            </Flex>
+          </Button>
+          <Button flexShrink={0} onClick={onLogout}>
+            <Icon boxSize={6}>
+              <img src="/MaterialSymbolsLogoutRounded.svg" alt="Logout" />
+            </Icon>
+          </Button>
+        </Flex>
       </Flex>
       <Tree
         userId={username}
-        totalCommits={totalCommits}
-        mergedPRs={mergedPRs}
-        streak={streak}
-        maxStreak={maxStreak}
-        daysWithCommits={daysWithCommits}
-        previousPeriodCommits={previousPeriodCommits}
-        growthVelocityPct={growthVelocityPct}
+        totalCommits={displayStats.totalCommits}
+        mergedPRs={displayStats.mergedPRs}
+        streak={displayStats.streak}
+        maxStreak={displayStats.maxStreak}
+        daysWithCommits={displayStats.daysWithCommits}
+        previousPeriodCommits={displayStats.previousPeriodCommits}
+        growthVelocityPct={displayStats.growthVelocityPct}
         commitDays={commitDays}
         onLoad={onTreeLoad}
       />

@@ -1,4 +1,4 @@
-import type { CommitDay } from "../../hooks/useCommitData";
+import type { CommitDay } from "../hooks/useCommitData";
 
 export type CommitSortMode = "date" | "repository";
 

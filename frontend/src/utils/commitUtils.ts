@@ -1,6 +1,6 @@
 import type { CommitDay } from "../../hooks/useCommitData";
 import { repositoryFromCommitUrl } from "./sketchUtils";
-import type { CommitSortMode } from "./types";
+import type { CommitSortMode } from "../types/Tree.types";
 
 export function buildDisplayCommitGroups(commitDays: CommitDay[], commitSortMode: CommitSortMode): CommitDay[] {
   if (commitSortMode === "date") return commitDays;

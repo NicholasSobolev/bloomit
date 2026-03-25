@@ -1,6 +1,6 @@
 import { Box, Button, Flex, Text } from "@chakra-ui/react";
 import type { CommitDay } from "../../hooks/useCommitData";
-import { getCommitTypeStyle } from "./commitUtils";
+import { getCommitTypeStyle } from "../../utils/commitUtils";
 
 interface CommitDetailsModalProps {
   selectedCommitDay: CommitDay | null;

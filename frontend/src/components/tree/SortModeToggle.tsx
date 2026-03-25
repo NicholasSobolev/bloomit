@@ -1,5 +1,5 @@
 import { Button, Flex } from "@chakra-ui/react";
-import type { CommitSortMode } from "./types";
+import type { CommitSortMode } from "../../types/Tree.types.ts";
 
 interface SortModeToggleProps {
   commitSortMode: CommitSortMode;
