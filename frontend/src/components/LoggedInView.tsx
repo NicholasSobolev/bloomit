@@ -14,6 +14,7 @@ import Tree from "./Tree";
 import Loading from "./Loading";
 import StatsCard from "./tree/StatsCard";
 import SearchCommits from "./tree/SearchCommits";
+import RepositoryViews from "./tree/RepositoryViews"
 
 import type { CommitDay } from "../hooks/useCommitData";
 
@@ -90,7 +91,7 @@ export default function LoggedInView({
         overflow="visible"
         zIndex={1}
       >
-        <Stack flex={1} minH={0} overflow="visible">
+        <Stack flex={1} minH={0} overflow="hidden">
           <Flex align="center" gap={3}>
             <Avatar.Root size="md">
               <Avatar.Fallback name={username} />
@@ -105,7 +106,7 @@ export default function LoggedInView({
               </Float>
             </Avatar.Root>
             <Stack gap="0" align="flex-start" minW={0}>
-              <Text fontWeight="medium" textAlign="left" lineClamp={1}>
+              <Text fontWeight="bold" textAlign="left" lineClamp={1} lineHeight="1">
                 {username}
               </Text>
               <Text
@@ -113,6 +114,7 @@ export default function LoggedInView({
                 textStyle="sm"
                 textAlign="left"
                 lineClamp={1}
+								lineHeight={1.5}
               >
                 {email}
               </Text>
@@ -126,6 +128,9 @@ export default function LoggedInView({
 
           <Box w="full">
             <SearchCommits commitDays={commitDays} />
+          </Box>
+          <Box flex={1} minH={0} w="full">
+            <RepositoryViews commitDays={commitDays} />
           </Box>
         </Stack>
         <Flex direction="row" w="full" gap={3}>

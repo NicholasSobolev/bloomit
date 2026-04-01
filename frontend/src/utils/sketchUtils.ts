@@ -45,9 +45,3 @@ export function drawLeaf(target: any, angleDeg: number, scale: number, r: number
   target.endShape(target.CLOSE);
   target.pop();
 }
-
-export function repositoryFromCommitUrl(url: string): string {
-  const match = url.match(/github\.com\/([^/]+)\/([^/]+)/i);
-  if (!match) return "Unknown repository";
-  return `${match[1]}/${match[2]}`;
-}

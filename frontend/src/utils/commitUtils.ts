@@ -1,12 +1,11 @@
-import type { CommitDay } from "../../hooks/useCommitData";
-import { repositoryFromCommitUrl } from "./sketchUtils";
+import type { CommitDay } from "../hooks/useCommitData";
 import type { CommitSortMode } from "../types/Tree.types";
-
-export function buildDisplayCommitGroups(commitDays: CommitDay[], commitSortMode: CommitSortMode): CommitDay[] {
+export function buildDisplayCommitGroups(
+  commitDays: CommitDay[],
+  commitSortMode: CommitSortMode,
+): CommitDay[] {
   if (commitSortMode === "date") return commitDays;
-
   const repoMap = new Map<string, CommitDay["commits"]>();
-
   for (const day of commitDays) {
     const dayCommits =
       day.commits && day.commits.length > 0
@@ -15,27 +14,28 @@ export function buildDisplayCommitGroups(commitDays: CommitDay[], commitSortMode
             {
               message: day.message,
               url: day.url,
-              repository: repositoryFromCommitUrl(day.url),
+              repository: "Unknown repository",
               timestamp: `${day.date}T00:00:00Z`,
             },
           ];
-
     for (const entry of dayCommits) {
-      const repository = entry.repository || repositoryFromCommitUrl(entry.url);
+      const repository = entry.repository || "Unknown repository";
       const current = repoMap.get(repository) ?? [];
       current.push(entry);
       repoMap.set(repository, current);
     }
   }
-
   return Array.from(repoMap.entries())
     .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([repository, commits]) => {
       const sortedCommits = commits
         .slice()
-        .sort((a, b) => (new Date(b.timestamp || "").getTime() || 0) - (new Date(a.timestamp || "").getTime() || 0));
+        .sort(
+          (a, b) =>
+            (new Date(b.timestamp || "").getTime() || 0) -
+            (new Date(a.timestamp || "").getTime() || 0),
+        );
       const first = sortedCommits[0];
-
       return {
         date: repository,
         count: sortedCommits.length,
@@ -45,13 +45,18 @@ export function buildDisplayCommitGroups(commitDays: CommitDay[], commitSortMode
       };
     });
 }
-
-export function sortCommitGroupsForSketch(groups: CommitDay[], commitSortMode: CommitSortMode): CommitDay[] {
+export function sortCommitGroupsForSketch(
+  groups: CommitDay[],
+  commitSortMode: CommitSortMode,
+): CommitDay[] {
   if (commitSortMode === "repository") return [...groups];
-  return [...groups].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  return [...groups].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  );
 }
-
-export function getSelectedCommitDetails(selectedCommitDay: CommitDay | null): CommitDay["commits"] {
+export function getSelectedCommitDetails(
+  selectedCommitDay: CommitDay | null,
+): CommitDay["commits"] {
   return (
     selectedCommitDay?.commits && selectedCommitDay.commits.length > 0
       ? selectedCommitDay.commits
@@ -73,10 +78,8 @@ export function getSelectedCommitDetails(selectedCommitDay: CommitDay | null): C
       return bTime - aTime;
     });
 }
-
 export function getCommitTypeStyle(message: string) {
   const normalized = message.toLowerCase();
-
   if (normalized.includes("feature")) {
     return {
       border: "rgba(104, 198, 138, 0.75)",
@@ -84,7 +87,6 @@ export function getCommitTypeStyle(message: string) {
       label: "feature",
     };
   }
-
   if (normalized.includes("refactor")) {
     return {
       border: "rgba(96, 150, 230, 0.75)",
@@ -92,7 +94,6 @@ export function getCommitTypeStyle(message: string) {
       label: "refactor",
     };
   }
-
   if (normalized.includes("bug fix") || normalized.includes("bugfix")) {
     return {
       border: "rgba(226, 98, 98, 0.78)",
@@ -100,7 +101,6 @@ export function getCommitTypeStyle(message: string) {
       label: "bug fix",
     };
   }
-
   if (normalized.includes("docs")) {
     return {
       border: "rgba(228, 196, 92, 0.78)",
@@ -108,7 +108,6 @@ export function getCommitTypeStyle(message: string) {
       label: "docs",
     };
   }
-
   return {
     border: "rgba(112, 142, 136, 0.5)",
     bg: "rgba(6, 16, 16, 0.55)",

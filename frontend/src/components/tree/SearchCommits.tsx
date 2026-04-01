@@ -63,7 +63,8 @@ export default function SearchCommits({ commitDays }: SearchCommitsProps) {
 
   const platformLabel = useMemo(() => {
     if (typeof navigator === "undefined") return "Ctrl";
-    return navigator.platform.toLowerCase().includes("mac") ? "Cmd" : "Ctrl";
+    return navigator.platform.toLowerCase().includes("mac") ? <img src="/MaterialSymbolsCommand.svg" alt="Command" /> : "Ctrl";
+                
   }, []);
 
   useEffect(() => {

@@ -20,6 +20,7 @@ export const useCommitData = (
   username: string,
   isNewLogin: boolean,
 ) => {
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
   const [daysWithCommits, setDaysWithCommits] = useState(0);
@@ -34,10 +35,10 @@ export const useCommitData = (
   useEffect(() => {
     if (!token || !username) return;
     const fetchData = async () => {
-			setIsLoading(true);
+      setIsLoading(true);
       try {
         const res = await axios.get(
-          `http://localhost:5000/commit_activity?token=${token}&username=${username}`,
+          `${apiBaseUrl}/commit_activity?token=${token}&username=${username}`,
         );
         setStreak(res.data.streak);
         setMaxStreak(res.data.max_streak);
@@ -46,7 +47,7 @@ export const useCommitData = (
         setTotalCommits(res.data.total_commits);
         setPreviousPeriodCommits(res.data.previous_period_commits ?? 0);
         setGrowthVelocityPct(res.data.growth_velocity_pct ?? 0);
-        setCommitDays(res.data.commit_days ?? []);  // ← new
+        setCommitDays(res.data.commit_days ?? []);
       } catch (error) {
         console.error("Error fetching commits:", error);
         toaster.create({
@@ -66,7 +67,7 @@ export const useCommitData = (
       }
     };
     fetchData();
-  }, [token, username, isNewLogin]);
+  }, [apiBaseUrl, token, username, isNewLogin]);
 
   return {
     streak,

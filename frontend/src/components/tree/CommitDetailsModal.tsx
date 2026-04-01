@@ -12,7 +12,7 @@ export default function CommitDetailsModal({ selectedCommitDay, selectedCommitDe
   if (!selectedCommitDay) return null;
 
   return (
-    <Box position="absolute" inset={0} zIndex={3} bg="rgba(2, 8, 8, 0.7)" onClick={onClose}>
+    <Box position="fixed" inset={0} zIndex={1400} bg="rgba(2, 8, 8, 0.7)" onClick={onClose}>
       <Flex
         position="absolute"
         top="7%"

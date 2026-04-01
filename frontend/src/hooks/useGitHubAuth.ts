@@ -9,6 +9,7 @@ export const useGitHubAuth = () => {
   const [email, setEmail] = useState("");
   const [isInitializing, setIsInitializing] = useState(true);
   const processedCodeRef = useRef(false);
+  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const stored = localStorage.getItem("token");
@@ -27,14 +28,30 @@ export const useGitHubAuth = () => {
 
   // exchange code for token and fetch user data
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
+    const currentUrl = new URL(window.location.href);
+    const urlParams = currentUrl.searchParams;
     const code = urlParams.get("code");
+    const clearOAuthParams = () => {
+      if (!urlParams.has("code") && !urlParams.has("state")) return;
+      urlParams.delete("code");
+      urlParams.delete("state");
+      const nextUrl = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
+      window.history.replaceState({}, "", nextUrl);
+    };
+
+    const stored = localStorage.getItem("token");
+    if (code && stored && stored.startsWith("gho_")) {
+      clearOAuthParams();
+      return;
+    }
+
     if (!code || processedCodeRef.current) return;
     processedCodeRef.current = true;
+
     const getToken = async () => {
       setIsInitializing(true);
       try {
-        const res = await axios.get(`http://localhost:5000/auth?code=${code}`);
+        const res = await axios.get(`${apiBaseUrl}/auth?code=${code}`);
         console.log("Auth response:", res.data);
         const newToken = res.data.access_token;
         if (!newToken) {
@@ -42,7 +59,7 @@ export const useGitHubAuth = () => {
         }
         setToken(newToken);
         localStorage.setItem("token", newToken);
-        window.history.replaceState({}, "", "/");
+        clearOAuthParams();
         try {
           const userRes = await axios.get("https://api.github.com/user", {
             headers: { Authorization: `token ${newToken}` },
@@ -77,7 +94,7 @@ export const useGitHubAuth = () => {
       }
     };
     getToken();
-  }, []);
+  }, [apiBaseUrl]);
 
   // load user data if token exists but no code (e.g., refresh)
   useEffect(() => {
