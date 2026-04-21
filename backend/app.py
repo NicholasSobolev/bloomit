@@ -11,6 +11,50 @@ app = Flask(__name__)
 CORS(app)
 GITHUB_API_URL = "https://api.github.com"
 
+@app.route("/search_profiles", methods=["GET"])
+def search_profiles():
+    query = (request.args.get("query") or "").strip()
+    token = request.args.get("token")
+    limit_raw = request.args.get("limit", "4")
+
+    if not query:
+        return jsonify({"profiles": []})
+
+    try:
+        limit = int(limit_raw)
+    except ValueError:
+        limit = 4
+
+    limit = max(1, min(limit, 4))
+
+    headers = {"Accept": "application/vnd.github+json"}
+    if token:
+        headers["Authorization"] = f"token {token}"
+
+    try:
+        response = requests.get(
+            f"{GITHUB_API_URL}/search/users",
+            headers=headers,
+            params={"q": f"{query} in:login", "per_page": limit},
+        )
+        response.raise_for_status()
+        items = response.json().get("items", [])
+    except Exception as e:
+        print("Profile search error:", e)
+        return jsonify({"profiles": []})
+
+    profiles = [
+        {
+            "login": item.get("login"),
+            "avatar_url": item.get("avatar_url"),
+            "html_url": item.get("html_url"),
+        }
+        for item in items[:limit]
+        if item.get("login")
+    ]
+
+    return jsonify({"profiles": profiles})
+
 @app.route("/auth", methods=["GET"])
 def auth():
     code = request.args.get("code")
@@ -35,10 +79,12 @@ def get_commit_data():
     previous_window_start = now_utc - timedelta(days=60)
     since = previous_window_start.isoformat()
 
-    if not token or not username:
-        return jsonify({"error": "Missing token or username"}), 400
+    if not username:
+        return jsonify({"error": "Missing username"}), 400
 
-    headers = {"Authorization": f"token {token}"}
+    headers = {}
+    if token:
+        headers["Authorization"] = f"token {token}"
 
     # date -> { count, message, url, commits }
     commit_day_map = {}

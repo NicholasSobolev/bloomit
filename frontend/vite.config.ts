@@ -14,7 +14,6 @@ export default defineConfig({
           if (!id.includes("node_modules")) return;
 
           if (id.includes("/node_modules/p5/")) return "p5";
-          if (id.includes("/node_modules/vanta/")) return "vanta";
           if (
             id.includes("/node_modules/@chakra-ui/") ||
             id.includes("/node_modules/@emotion/")

@@ -33,13 +33,15 @@ export const useCommitData = (
 	const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!token || !username) return;
+    if (!username) return;
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const res = await axios.get(
-          `${apiBaseUrl}/commit_activity?token=${token}&username=${username}`,
-        );
+        const params: Record<string, string> = { username };
+        if (token) {
+          params.token = token;
+        }
+        const res = await axios.get(`${apiBaseUrl}/commit_activity`, { params });
         setStreak(res.data.streak);
         setMaxStreak(res.data.max_streak);
         setDaysWithCommits(res.data.days_with_commits.length);

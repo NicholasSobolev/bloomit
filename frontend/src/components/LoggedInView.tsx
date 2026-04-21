@@ -15,11 +15,14 @@ import Loading from "./Loading";
 import StatsCard from "./tree/StatsCard";
 import SearchCommits from "./tree/SearchCommits";
 import RepositoryViews from "./tree/RepositoryViews"
+import ProfileSearchInput from "./ProfileSearchInput";
 
 import type { CommitDay } from "../hooks/useCommitData";
 
 interface LoggedInViewProps {
+  token: string | null;
   username: string;
+  viewerUsername: string;
   avatarUrl: string;
   email: string;
   streak: number;
@@ -32,11 +35,16 @@ interface LoggedInViewProps {
   commitDays: CommitDay[];
   treeLoaded: boolean;
   onTreeLoad: () => void;
+  onViewProfile: (username: string) => void;
+  onShowMyProfile: () => void;
   onLogout: () => void;
+  exitLabel: string;
 }
 
 export default function LoggedInView({
+  token,
   username,
+  viewerUsername,
   avatarUrl,
   email,
   streak,
@@ -49,8 +57,13 @@ export default function LoggedInView({
   commitDays,
   treeLoaded,
   onTreeLoad,
+  onViewProfile,
+  onShowMyProfile,
   onLogout,
+  exitLabel,
 }: LoggedInViewProps) {
+  const isViewingOtherProfile = !!viewerUsername && username !== viewerUsername;
+
   const useMaxStatsForTesting = false;
 
   const displayStats = useMaxStatsForTesting
@@ -75,6 +88,32 @@ export default function LoggedInView({
 
   return (
     <Box position="relative" height="100vh" width="100vw" bg="#022222">
+      <Box
+        position="absolute"
+        top="12px"
+        left="50%"
+        transform="translateX(-50%)"
+        width={{ base: "calc(100% - 24px)", md: "560px" }}
+        zIndex={2}
+      >
+        <Flex gap={2} align="center">
+          <ProfileSearchInput
+            token={token}
+            onViewProfile={onViewProfile}
+            placeholder="Username or GitHub profile URL"
+            inputBg="rgba(3, 10, 10, 0.9)"
+            inputBorderColor="whiteAlpha.300"
+            buttonLabel="View"
+            size="xs"
+          />
+          {isViewingOtherProfile && (
+            <Button size="xs" variant="subtle" onClick={onShowMyProfile}>
+              Return
+            </Button>
+          )}
+        </Flex>
+      </Box>
+
       <Flex
         direction="column"
         position="absolute"
@@ -146,6 +185,7 @@ export default function LoggedInView({
             <Icon boxSize={6}>
               <img src="/MaterialSymbolsLogoutRounded.svg" alt="Logout" />
             </Icon>
+            <Text fontSize="sm">{exitLabel}</Text>
           </Button>
         </Flex>
       </Flex>

@@ -163,7 +163,7 @@ export default function SearchCommits({ commitDays }: SearchCommitsProps) {
 
       <HStack
         pointerEvents="none"
-        spacing={1}
+        gap={1}
         position="absolute"
         right="8px"
         top="50%"
